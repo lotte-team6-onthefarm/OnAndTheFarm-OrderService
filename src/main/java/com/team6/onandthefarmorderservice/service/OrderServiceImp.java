@@ -320,7 +320,7 @@ public class OrderServiceImp implements OrderService{
 
         User user = userServiceClient.findByUserId(Long.valueOf(orderUserFindDto.getUserId()));
 
-        List<Orders> myOrders = orderRepository.findByUser(user);
+        List<Orders> myOrders = orderRepository.findByUserId(user.getUserId());
 
         for(Orders order : myOrders){
             int totalPrice = 0;

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
-@FeignClient(name = "product-service")
+@FeignClient(name = "product-service", contextId = "product-service-cart")
 public interface CartServiceClient {
     @GetMapping("/api/user/product-service/cart/{user-no}")
     public List<Cart> findByUserId(@PathVariable("user-no") Long userId);
