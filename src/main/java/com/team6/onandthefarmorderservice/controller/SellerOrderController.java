@@ -3,6 +3,7 @@ package com.team6.onandthefarmorderservice.controller;
 import com.team6.onandthefarmorderservice.dto.OrderDeliveryDto;
 import com.team6.onandthefarmorderservice.dto.OrderSellerDetailDto;
 import com.team6.onandthefarmorderservice.dto.OrderSellerFindDto;
+import com.team6.onandthefarmorderservice.kafka.producer.OrderProducer;
 import com.team6.onandthefarmorderservice.service.OrderService;
 import com.team6.onandthefarmorderservice.utils.BaseResponse;
 import com.team6.onandthefarmorderservice.vo.*;
@@ -31,9 +32,13 @@ import java.util.List;
 public class SellerOrderController {
     private OrderService orderService;
 
+    private OrderProducer orderProducer;
+
     @Autowired
-    public SellerOrderController(OrderService orderService) {
+    public SellerOrderController(OrderService orderService,
+                                 OrderProducer orderProducer) {
         this.orderService = orderService;
+        this.orderProducer=orderProducer;
     }
 
 
@@ -113,11 +118,12 @@ public class SellerOrderController {
     @PostMapping("/claim/list/{orderProduct-no}")
     @ApiOperation(value = "반품 확정")
     public ResponseEntity<BaseResponse> claimConform(@PathVariable(name = "orderProduct-no") String orderProductId){
-        Boolean result = orderService.conformRefund(Long.valueOf(orderProductId));
+        //Boolean result = orderService.conformRefund(Long.valueOf(orderProductId));
+        orderProducer.refundSend("order_product",Long.valueOf(orderProductId));
         BaseResponse response = BaseResponse.builder()
                 .httpStatus(HttpStatus.OK)
                 .message("OK")
-                .data(result.booleanValue())
+                .data(Boolean.TRUE)
                 .build();
         return new ResponseEntity(response,HttpStatus.OK);
     }
