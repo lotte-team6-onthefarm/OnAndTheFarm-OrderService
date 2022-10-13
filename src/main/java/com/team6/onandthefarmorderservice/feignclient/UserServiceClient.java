@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "member-service")
 public interface UserServiceClient {
+    /**
+     * 유저ID를 이용해서 유저 정보를 가져오는 것
+     * @param userId
+     * @return
+     */
     @GetMapping("/api/user/member-service/user/{user-no}")
     public User findByUserId(@PathVariable("user-no") Long userId);
 }

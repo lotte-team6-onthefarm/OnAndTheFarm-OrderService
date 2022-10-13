@@ -11,5 +11,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class KafkaOrderProductDto implements Serializable {
     private Schema schema;
+
     private OrderProductPayload payload;
 }

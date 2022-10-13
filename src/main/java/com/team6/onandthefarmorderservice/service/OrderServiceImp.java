@@ -215,6 +215,9 @@ public class OrderServiceImp implements OrderService{
                     .build();
             orderProductRepository.save(orderProduct); // 각각의 주문 상품 생성
             Product product = productServiceClient.findByProductId(order.getProductId());
+            /**
+             *  분산트랜잭션 부분
+             */
             product.setProductTotalStock(product.getProductTotalStock()-order.getProductQty());
             product.setProductSoldCount(product.getProductSoldCount()+1);
         }
