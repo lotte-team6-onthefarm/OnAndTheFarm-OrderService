@@ -18,4 +18,6 @@ public class OrderSellerRequest {
     private String endDate;
 
     private Integer pageNumber;
+
+    private String ordersStatus;
 }

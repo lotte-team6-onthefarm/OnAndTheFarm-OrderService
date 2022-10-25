@@ -1,15 +1,14 @@
 package com.team6.onandthefarmorderservice.controller;
 
 
+import com.team6.onandthefarmorderservice.TCC;
 import com.team6.onandthefarmorderservice.dto.*;
 import com.team6.onandthefarmorderservice.service.OrderService;
 import com.team6.onandthefarmorderservice.utils.BaseResponse;
 import com.team6.onandthefarmorderservice.vo.*;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,33 +17,47 @@ import springfox.documentation.annotations.ApiIgnore;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/user/orders")
-@Api(value = "주문",description = "주문 상태\n" +
+/** @Api(value = "주문",description = "주문 상태\n" +
         " * activated(os0) : 주문완료\n" +
         " * canceled(os1) : 주문취소\n" +
         " * refundRequest(os2) : 반품신청\n" +
         " * refundCompleted(os3) : 반품확정\n" +
         " * deliveryProgress(os4) : 배송 중\n" +
         " * deliveryCompleted(os5) : 배송 완료")
+**/
 public class UserOrderController {
-    private OrderService orderService;
+    private final OrderService orderService;
 
-    @Autowired
-    public UserOrderController(OrderService orderService) {
-        this.orderService = orderService;
-    }
+    private final TCC tcc;
 
     @PostMapping("/sheet")
-    @ApiOperation(value = "단건 주문서 조회")
+    // @ApiOperation(value = "단건 주문서 조회")
     public ResponseEntity<BaseResponse<OrderSheetResponse>> findOneOrder(
             @ApiIgnore Principal principal, @RequestBody OrderSheetRequest orderSheetRequest){
+
+        if(principal == null){
+            BaseResponse baseResponse = BaseResponse.builder()
+                    .httpStatus(HttpStatus.FORBIDDEN)
+                    .message("no authorization")
+                    .build();
+            return new ResponseEntity(baseResponse, HttpStatus.BAD_REQUEST);
+        }
+
+        String[] principalInfo = principal.getName().split(" ");
+        Long userId = Long.parseLong(principalInfo[0]);
+
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         OrderSheetDto orderSheetDto = modelMapper.map(orderSheetRequest,OrderSheetDto.class);
-        orderSheetDto.setUserId(Long.valueOf(principal.getName()));
+        orderSheetDto.setUserId(userId);
+
         OrderSheetResponse result = orderService.findOneByProductId(orderSheetDto);
+
         BaseResponse<OrderSheetResponse> response = BaseResponse.<OrderSheetResponse>builder()
                 .httpStatus(HttpStatus.OK)
                 .message("OK")
@@ -54,10 +67,23 @@ public class UserOrderController {
     }
 
     @GetMapping("/carts")
-    @ApiOperation(value = "다건 주문서 조회")
+    // @ApiOperation(value = "다건 주문서 조회")
     public ResponseEntity<List<OrderFindOneResponse>> findOrders(@ApiIgnore Principal principal){
+
+        if(principal == null){
+            BaseResponse baseResponse = BaseResponse.builder()
+                    .httpStatus(HttpStatus.FORBIDDEN)
+                    .message("no authorization")
+                    .build();
+            return new ResponseEntity(baseResponse, HttpStatus.BAD_REQUEST);
+        }
+
+        String[] principalInfo = principal.getName().split(" ");
+        Long userId = Long.parseLong(principalInfo[0]);
+
         List<OrderFindOneResponse> responseList
-                = orderService.findCartByUserId(Long.valueOf(principal.getName()));
+                = orderService.findCartByUserId(userId);
+
         return new ResponseEntity(responseList,HttpStatus.OK);
     }
 
@@ -66,10 +92,21 @@ public class UserOrderController {
      * @param orderRequest
      * @return
      */
-    @PostMapping()
-    @ApiOperation(value = "주문 생성")
-    public ResponseEntity<BaseResponse> createOrder(
-            @ApiIgnore Principal principal,@RequestBody OrderRequest orderRequest){
+    @PostMapping("/api/user/orders")
+    public ResponseEntity createOrder(
+            @ApiIgnore Principal principal, @RequestBody OrderRequest orderRequest){
+
+        if(principal == null){
+            BaseResponse baseResponse = BaseResponse.builder()
+                    .httpStatus(HttpStatus.FORBIDDEN)
+                    .message("no authorization")
+                    .build();
+            return new ResponseEntity(baseResponse, HttpStatus.BAD_REQUEST);
+        }
+
+        String[] principalInfo = principal.getName().split(" ");
+        Long userId = Long.parseLong(principalInfo[0]);
+
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         OrderDto orderDto = OrderDto.builder()
@@ -77,7 +114,8 @@ public class UserOrderController {
                 .orderRequest(orderRequest.getOrderRequest())
                 .orderPhone(orderRequest.getOrderPhone())
                 .orderAddress(orderRequest.getOrderAddress())
-                .userId(Long.valueOf(principal.getName()))
+                .userId(1l)
+                .orderSerial(UUID.randomUUID().toString())
                 .productList(new ArrayList<>())
                 .build();
 
@@ -85,27 +123,45 @@ public class UserOrderController {
             OrderProductDto orderProductDto = OrderProductDto.builder()
                     .productQty(order.getProductQty())
                     .productId(order.getProductId())
+                    .productPrice(1000)
                     .build();
             orderDto.getProductList().add(orderProductDto);
         }
 
-        orderService.createOrder(orderDto);
+        try{
+            tcc.placeOrder(orderDto);
+        } catch (RuntimeException e){
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
 
-        BaseResponse response = BaseResponse.builder().httpStatus(HttpStatus.OK).message("OK").build();
+        //orderService.createOrder(orderDto);
 
-        return new ResponseEntity(response,HttpStatus.OK);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
 
     @PostMapping("/list")
-    @ApiOperation(value = "유저 주문 내역 조회")
-    public ResponseEntity<BaseResponse<List<OrderSellerResponseList>>> findUserAllOrders(
+    // @ApiOperation(value = "유저 주문 내역 조회")
+    public ResponseEntity<BaseResponse<OrderUserResponseListResponse>> findUserAllOrders(
             @ApiIgnore Principal principal, @RequestBody OrderUserRequest orderUserRequest){
+
+        if(principal == null){
+            BaseResponse baseResponse = BaseResponse.builder()
+                    .httpStatus(HttpStatus.FORBIDDEN)
+                    .message("no authorization")
+                    .build();
+            return new ResponseEntity(baseResponse, HttpStatus.BAD_REQUEST);
+        }
+
+        String[] principalInfo = principal.getName().split(" ");
+        String userId = principalInfo[0];
+
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         OrderUserFindDto orderUserFindDto = modelMapper.map(orderUserRequest, OrderUserFindDto.class);
-        orderUserFindDto.setUserId(principal.getName());
-        List<OrderUserResponseList> responses  = orderService.findUserOrders(orderUserFindDto);
+        orderUserFindDto.setUserId(userId);
+        OrderUserResponseListResponse responses  = orderService.findUserOrders(orderUserFindDto);
         BaseResponse response = BaseResponse.builder()
                 .httpStatus(HttpStatus.OK)
                 .message("OK")
@@ -115,7 +171,7 @@ public class UserOrderController {
     }
 
     @GetMapping("/list/{order-no}")
-    @ApiOperation(value = "유저 주문 상세 조회")
+    // @ApiOperation(value = "유저 주문 상세 조회")
     public ResponseEntity<BaseResponse<OrderUserDetailResponse>> findSellerOrderDetail(
             @PathVariable(name = "order-no") String orderSerial){
         OrderUserDetailResponse detailResponse = orderService.findUserOrderDetail(orderSerial);
@@ -129,30 +185,62 @@ public class UserOrderController {
 
 
     @PostMapping("/claim/cancel")
-    @ApiOperation(value = "취소 생성" )
+    // @ApiOperation(value = "취소 생성" )
     public ResponseEntity<BaseResponse<Boolean>> createCancel(
             @ApiIgnore Principal principal, @RequestBody RefundRequest refundRequest){
+
+        if(principal == null){
+            BaseResponse baseResponse = BaseResponse.builder()
+                    .httpStatus(HttpStatus.FORBIDDEN)
+                    .message("no authorization")
+                    .build();
+            return new ResponseEntity(baseResponse, HttpStatus.BAD_REQUEST);
+        }
+
+        String[] principalInfo = principal.getName().split(" ");
+        Long userId = Long.parseLong(principalInfo[0]);
+
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         RefundDto refundDto = modelMapper.map(refundRequest, RefundDto.class);
-        refundDto.setUserId(Long.valueOf(principal.getName()));
+        refundDto.setUserId(userId);
         Boolean result = orderService.createCancel(refundDto);
+        if(result.booleanValue()){
+            BaseResponse response = BaseResponse.builder()
+                    .httpStatus(HttpStatus.OK)
+                    .message("OK")
+                    .data(result)
+                    .build();
+            return new ResponseEntity(response,HttpStatus.OK);
+        }
         BaseResponse response = BaseResponse.builder()
-                .httpStatus(HttpStatus.OK)
-                .message("OK")
+                .httpStatus(HttpStatus.BAD_REQUEST)
+                .message("BAD_REQUEST")
                 .data(result)
                 .build();
-        return new ResponseEntity(response,HttpStatus.OK);
+        return new ResponseEntity(response,HttpStatus.BAD_REQUEST);
     }
 
     @PostMapping("/claim/refund")
-    @ApiOperation(value = "반품 생성" )
+    // @ApiOperation(value = "반품 생성" )
     public ResponseEntity<BaseResponse<Boolean>> createRefund(
             @ApiIgnore Principal principal, @RequestBody RefundRequest refundRequest){
+
+        if(principal == null){
+            BaseResponse baseResponse = BaseResponse.builder()
+                    .httpStatus(HttpStatus.FORBIDDEN)
+                    .message("no authorization")
+                    .build();
+            return new ResponseEntity(baseResponse, HttpStatus.BAD_REQUEST);
+        }
+
+        String[] principalInfo = principal.getName().split(" ");
+        Long userId = Long.parseLong(principalInfo[0]);
+
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         RefundDto refundDto = modelMapper.map(refundRequest, RefundDto.class);
-        refundDto.setUserId(Long.valueOf(principal.getName()));
+        refundDto.setUserId(userId);
         boolean result = orderService.createRefund(refundDto);
         BaseResponse response = BaseResponse.builder()
                 .httpStatus(HttpStatus.OK)
@@ -163,15 +251,27 @@ public class UserOrderController {
     }
 
     @PostMapping("/claim/list")
-    @ApiOperation(value = "유저 취소/반품 내역 조회")
-    public ResponseEntity<BaseResponse<List<OrderSellerResponse>>> findUserClaims(
+    // @ApiOperation(value = "유저 취소/반품 내역 조회")
+    public ResponseEntity<BaseResponse<OrderRefundResultResponse>> findUserClaims(
             @ApiIgnore Principal principal, @RequestBody OrderUserRequest orderUserRequest){
+
+        if(principal == null){
+            BaseResponse baseResponse = BaseResponse.builder()
+                    .httpStatus(HttpStatus.FORBIDDEN)
+                    .message("no authorization")
+                    .build();
+            return new ResponseEntity(baseResponse, HttpStatus.BAD_REQUEST);
+        }
+
+        String[] principalInfo = principal.getName().split(" ");
+        String userId = principalInfo[0];
+
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         OrderUserFindDto orderUserFindDto = modelMapper.map(orderUserRequest,OrderUserFindDto.class);
-        orderUserFindDto.setUserId(principal.getName());
-        List<OrderSellerResponse> responseList = orderService.findUserClaims(orderUserFindDto);
-        BaseResponse<List<OrderSellerResponse>> response = BaseResponse.<List<OrderSellerResponse>>builder()
+        orderUserFindDto.setUserId(userId);
+        OrderRefundResultResponse responseList = orderService.findUserClaims(orderUserFindDto);
+        BaseResponse<OrderRefundResultResponse> response = BaseResponse.<OrderRefundResultResponse>builder()
                 .httpStatus(HttpStatus.OK)
                 .message("OK")
                 .data(responseList)

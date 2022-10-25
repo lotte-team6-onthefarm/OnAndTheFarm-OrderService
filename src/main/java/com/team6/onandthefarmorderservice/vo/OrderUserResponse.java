@@ -7,18 +7,19 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderFindOneDetailResponse {
+public class OrderUserResponse {
     private Long orderProductId;
 
-    private String productName;
+    private Integer orderProductQty;
 
-    private String productImg;
+    private String orderProductName;
 
-    private Integer productPrice;
+    private Integer orderProductPrice;
 
-    private Integer productQty;
+    private String orderProductMainImg;
 
     private String orderProductStatus;
 
     private Long productId;
+
 }

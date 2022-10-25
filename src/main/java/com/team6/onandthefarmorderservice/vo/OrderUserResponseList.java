@@ -9,9 +9,19 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderUserResponseList {
-    List<OrderSellerResponse> orderSellerResponses;
+    List<OrderUserResponse> orderUserResponses;
 
     private Integer orderTotalPrice;
 
     private String orderDate;
+
+    private String orderProductDeliveryWaybillNumber;
+
+    private String orderProductDeliveryCompany;
+
+    private String orderProductDeliveryDate;
+
+    private String ordersSerial;
+
+    private String orderStatus;
 }

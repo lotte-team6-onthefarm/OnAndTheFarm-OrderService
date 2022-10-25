@@ -1,7 +1,7 @@
 package com.team6.onandthefarmorderservice.feignclient;
 
-import com.team6.onandthefarmorderservice.vo.cart.Cart;
-import com.team6.onandthefarmorderservice.vo.product.Product;
+
+import com.team6.onandthefarmorderservice.vo.feignclient.CartVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +15,6 @@ public interface CartServiceClient {
      * @param userId
      * @return
      */
-    @GetMapping("/api/user/product-service/cart/{user-no}")
-    public List<Cart> findByUserId(@PathVariable("user-no") Long userId);
+    @GetMapping("/api/user/cart/product-service/{user-no}")
+    List<CartVo> findByUserId(@PathVariable("user-no") Long userId);
 }

@@ -15,4 +15,6 @@ public class OrderSellerFindDto {
     private String endDate;
 
     private Integer pageNumber;
+
+    private String ordersStatus;
 }

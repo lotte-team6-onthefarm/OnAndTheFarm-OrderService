@@ -26,4 +26,6 @@ public class OrderDto {
     private List<OrderProductDto> productList;
 
     private Map<Long,Long> prodSeller;
+
+    private String orderSerial;
 }

@@ -1,7 +1,7 @@
 package com.team6.onandthefarmorderservice.feignclient;
 
-import com.team6.onandthefarmorderservice.vo.product.Product;
-import com.team6.onandthefarmorderservice.vo.user.User;
+
+import com.team6.onandthefarmorderservice.vo.feignclient.UserVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +13,6 @@ public interface UserServiceClient {
      * @param userId
      * @return
      */
-    @GetMapping("/api/user/member-service/user/{user-no}")
-    public User findByUserId(@PathVariable("user-no") Long userId);
+    @GetMapping("/api/user/user/member-service/{user-no}")
+    UserVo findByUserId(@PathVariable("user-no") Long userId);
 }

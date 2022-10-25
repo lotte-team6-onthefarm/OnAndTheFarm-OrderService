@@ -12,9 +12,15 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Getter
 @Setter
+@SequenceGenerator(
+        name="REFUND_SEQ_GENERATOR",
+        sequenceName = "REFUND_SEQ",
+        initialValue = 100000, allocationSize = 1
+)
 public class Refund {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE,
+            generator = "REFUND_SEQ_GENERATOR")
     private Long refundId;
 
     @OneToOne(fetch = FetchType.LAZY)
