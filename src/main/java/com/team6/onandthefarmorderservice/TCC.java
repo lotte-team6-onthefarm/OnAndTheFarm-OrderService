@@ -4,6 +4,7 @@ package com.team6.onandthefarmorderservice;
 import com.team6.onandthefarmorderservice.dto.OrderDto;
 import com.team6.onandthefarmorderservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,8 @@ public class TCC {
     private final TccRestAdapter tccRestAdapter;
 
     private final OrderService orderService;
+
+    private final Environment env;
 
     public void placeOrder(OrderDto orderDto) {
         List<ParticipantLink> participantLinks = new ArrayList<>();
@@ -56,7 +59,7 @@ public class TCC {
      * @return
      */
     private ParticipantLink tryOrder(OrderDto orderDto) {
-        final String requestURL = "http://10.0.1.4:8081/api/user/product/product-service/order-try";
+        final String requestURL = "http://"+env.getProperty("serviceurl.product")+"/api/user/product/product-service/order-try";
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("adjustmentType", "ORDER");
         requestBody.put("productIdList", orderDto.getProductList());
@@ -64,7 +67,7 @@ public class TCC {
     }
 
     private ParticipantLink tryPayment(OrderDto orderDto) {
-        final String requestURL = "http://10.0.1.241:8082/api/user/payment/payment-service/payment-try";
+        final String requestURL = "http://"+env.getProperty("serviceurl.payment")+"/api/user/payment/payment-service/payment-try";
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("adjustmentType", "ORDER");
         requestBody.put("productIdList", orderDto.getProductList());
