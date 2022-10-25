@@ -13,9 +13,15 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Getter
 @Setter
+@SequenceGenerator(
+        name="ORDER_PRODUCT_SEQ_GENERATOR",
+        sequenceName = "ORDER_PRODUCT_SEQ",
+        initialValue = 100000, allocationSize = 1
+)
 public class OrderProduct {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE,
+            generator = "ORDER_PRODUCT_SEQ_GENERATOR")
     private Long orderProductId;
 
     @ManyToOne(fetch = FetchType.LAZY)

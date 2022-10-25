@@ -1,4 +1,4 @@
-package com.team6.onandthefarmorderservice.vo.user;
+package com.team6.onandthefarmorderservice.vo.feignclient;
 
 import lombok.*;
 
@@ -7,7 +7,8 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class UserVo {
+
     private Long userId;
 
     private String userEmail;
@@ -43,4 +44,10 @@ public class User {
     private String userAppleNumber;
 
     private String userGoogleNumber;
+
+    private Integer userFollowingCount;
+
+    private Integer userFollowerCount;
+
+    private String userProfileImg;
 }

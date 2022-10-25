@@ -25,4 +25,10 @@ public class OrderUserDetailResponse {
     private String orderStatus;
 
     private Integer orderTotalPrice;
+
+    private String orderProductDeliveryWaybillNumber;
+
+    private String orderProductDeliveryCompany;
+
+    private String orderProductDeliveryDate;
 }

@@ -1,14 +1,14 @@
-package com.team6.onandthefarmorderservice.vo.cart;
+package com.team6.onandthefarmorderservice.vo.feignclient;
 
 import lombok.*;
-
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Cart {
+public class CartVo {
+
     private Long cartId;
 
     private Long productId;

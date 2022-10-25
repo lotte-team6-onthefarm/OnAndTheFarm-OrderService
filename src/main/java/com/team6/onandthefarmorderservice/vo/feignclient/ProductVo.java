@@ -1,4 +1,4 @@
-package com.team6.onandthefarmorderservice.vo.product;
+package com.team6.onandthefarmorderservice.vo.feignclient;
 
 import lombok.*;
 
@@ -8,7 +8,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Product {
+public class ProductVo {
     private Long productId;
 
     private Long categoryId;
@@ -40,4 +40,6 @@ public class Product {
     private Integer productWishCount;
 
     private Integer productSoldCount;
+
+    private Integer productViewCount;
 }

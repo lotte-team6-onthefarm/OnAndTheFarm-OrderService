@@ -4,11 +4,13 @@ import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+
 @Component
 public class DateUtils {
 
     public String transDate(String pattern){
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern, Locale.KOREA);
         String date = simpleDateFormat.format(new Date());
         return date;
     }
