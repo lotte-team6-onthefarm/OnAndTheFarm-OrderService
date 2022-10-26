@@ -14,4 +14,5 @@ import lombok.Setter;
 public class OrderClientOrderProductIdResponse {
 	private Long orderProductId;
 	private Long productId;
+	private String ordersDate;
 }
