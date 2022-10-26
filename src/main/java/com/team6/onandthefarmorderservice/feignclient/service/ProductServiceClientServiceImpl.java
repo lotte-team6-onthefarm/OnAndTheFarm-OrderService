@@ -24,6 +24,7 @@ public class ProductServiceClientServiceImpl implements ProductServiceClientServ
 		OrderClientOrderProductIdResponse orderClientOrderProductIdResponse = OrderClientOrderProductIdResponse.builder()
 				.orderProductId(orderProductId)
 				.productId(productId)
+				.ordersDate(orderProductRepository.findById(orderProductId).get().getOrders().getOrdersDate())
 				.build();
 
 		return orderClientOrderProductIdResponse;
