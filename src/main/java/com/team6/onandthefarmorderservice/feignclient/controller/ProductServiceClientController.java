@@ -19,7 +19,7 @@ public class ProductServiceClientController {
 		this.productServiceClientService = productServiceClientService;
 	}
 
-	@GetMapping("/api/user/order-service/order-product/{order-product-no}")
+	@GetMapping("/api/user/orders/order-service/order-product/{order-product-no}")
 	OrderClientOrderProductIdResponse findProductIdByOrderProductId(
 			@PathVariable("order-product-no") Long orderProductId) {
 		return productServiceClientService.getProductIdByOrderProductId(orderProductId);
