@@ -83,9 +83,7 @@ public class OrderServiceImp implements OrderService {
                 .userId(orderDto.getUserId())
                 .build(); // 주문 엔티티 생성
         for(OrderProductDto orderProductDto : orderDto.getProductList()){
-            ProductVo productVo = (ProductVo) circuitbreaker.run(()-> productServiceClient.findByProductId(orderProductDto.getProductId()),
-                    throwable -> new RuntimeException());
-            // ProductVo productVo = productServiceClient.findByProductId(orderProductDto.getProductId());
+            ProductVo productVo = productServiceClient.findByProductId(orderProductDto.getProductId());
             orderProductDto.setProductName(productVo.getProductName());
             orderProductDto.setProductPrice(productVo.getProductPrice());
             orderProductDto.setSellerId(productVo.getSellerId());
@@ -122,9 +120,7 @@ public class OrderServiceImp implements OrderService {
     public boolean checkStock(OrderDto orderDto, CircuitBreaker circuitbreaker){
         List<OrderProductDto> orderProducts = orderDto.getProductList();
         for(OrderProductDto orderProduct : orderProducts){
-            ProductVo productVo = (ProductVo) circuitbreaker.run(()-> productServiceClient.findByProductId(orderProduct.getProductId()),
-                    throwable -> new RuntimeException());
-            //ProductVo productVo = productServiceClient.findByProductId(orderProduct.getProductId());
+            ProductVo productVo = productServiceClient.findByProductId(orderProduct.getProductId());
             if(productVo.getProductTotalStock()>=orderProduct.getProductQty()){
                 return true;
             }
@@ -143,12 +139,10 @@ public class OrderServiceImp implements OrderService {
     public OrderSheetResponse findOneByProductId(OrderSheetDto orderSheetDto){
         CircuitBreaker productCircuitbreaker = circuitbreakerFactory.create("productCircuitbreaker");
         CircuitBreaker userCircuitbreaker = circuitbreakerFactory.create("userCircuitbreaker");
-        ProductVo product = (ProductVo) productCircuitbreaker.run(()-> productServiceClient.findByProductId(orderSheetDto.getProductId()),
-                throwable -> new RuntimeException());
-        //ProductVo product = productServiceClient.findByProductId(orderSheetDto.getProductId());
-        UserVo user = (UserVo) userCircuitbreaker.run(()-> userServiceClient.findByUserId(orderSheetDto.getUserId()),
-                throwable -> new RuntimeException());
-        //UserVo user = userServiceClient.findByUserId(orderSheetDto.getUserId());
+
+        ProductVo product = productServiceClient.findByProductId(orderSheetDto.getProductId());
+
+        UserVo user = userServiceClient.findByUserId(orderSheetDto.getUserId());
         log.info("제품 정보  =>  "+ product.toString());
         OrderSheetResponse response = OrderSheetResponse.builder()
                 .productId(orderSheetDto.getProductId())
@@ -218,7 +212,7 @@ public class OrderServiceImp implements OrderService {
          */
         Map<Long, Set<Long>> matching = new HashMap<>();
         for(OrderProduct orderProduct : orderProductList){
-            if(Long.valueOf(orderSellerFindDto.getSellerId())==orderProduct.getSellerId()){
+            if(Long.valueOf(orderSellerFindDto.getSellerId()).equals(orderProduct.getSellerId())){
                 if(!matching.containsKey(orderProduct.getSellerId())){
                     matching.put(orderProduct.getSellerId(),new HashSet<>());
                 }
@@ -234,7 +228,7 @@ public class OrderServiceImp implements OrderService {
             UserVo user = userServiceClient.findByUserId(order.get().getUserId());
 
             for(OrderProduct orderProduct : orderProductList){
-                if(orderProduct.getOrders().getOrdersId()!=orderId) continue;
+                if(!orderProduct.getOrders().getOrdersId().equals(orderId)) continue;
                 OrderSellerResponse orderSellerResponse = OrderSellerResponse.builder()
                         .userName(user.getUserName())
                         .orderProductName(orderProduct.getOrderProductName())
@@ -417,7 +411,7 @@ public class OrderServiceImp implements OrderService {
         List<OrderProduct> orderProducts = orderProductRepository.findByOrders(order);
 
         for(OrderProduct orderProduct : orderProducts){
-            if(orderProduct.getSellerId()!=Long.valueOf(orderSellerDetailDto.getSellerId())) continue;
+            if(!orderProduct.getSellerId().equals(Long.valueOf(orderSellerDetailDto.getSellerId()))) continue;
             OrderFindOneDetailResponse orderFindOneDetailResponse = OrderFindOneDetailResponse.builder()
                     .orderProductId(orderProduct.getOrderProductId())
                     .productImg(orderProduct.getOrderProductMainImg())

@@ -1,8 +1,11 @@
 package com.team6.onandthefarmorderservice.controller;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team6.onandthefarmorderservice.TCC;
 import com.team6.onandthefarmorderservice.dto.*;
+import com.team6.onandthefarmorderservice.kafka.ProductOrderChannelAdapter;
 import com.team6.onandthefarmorderservice.service.OrderService;
 import com.team6.onandthefarmorderservice.utils.BaseResponse;
 import com.team6.onandthefarmorderservice.vo.*;
@@ -16,6 +19,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,6 +38,8 @@ public class UserOrderController {
     private final OrderService orderService;
 
     private final TCC tcc;
+
+    private final ProductOrderChannelAdapter productOrderChannelAdapter;
 
     @PostMapping("/sheet")
     // @ApiOperation(value = "단건 주문서 조회")
@@ -92,7 +98,7 @@ public class UserOrderController {
      * @param orderRequest
      * @return
      */
-    @PostMapping("/api/user/orders")
+    @PostMapping()
     public ResponseEntity createOrder(
             @ApiIgnore Principal principal, @RequestBody OrderRequest orderRequest){
 
@@ -114,8 +120,8 @@ public class UserOrderController {
                 .orderRequest(orderRequest.getOrderRequest())
                 .orderPhone(orderRequest.getOrderPhone())
                 .orderAddress(orderRequest.getOrderAddress())
-                .userId(1l)
-                .orderSerial(UUID.randomUUID().toString())
+                .userId(userId)
+                .orderSerial(String.valueOf((new Date()).getTime()))
                 .productList(new ArrayList<>())
                 .build();
 
@@ -123,7 +129,7 @@ public class UserOrderController {
             OrderProductDto orderProductDto = OrderProductDto.builder()
                     .productQty(order.getProductQty())
                     .productId(order.getProductId())
-                    .productPrice(1000)
+                    .productPrice(order.getProductPrice())
                     .build();
             orderDto.getProductList().add(orderProductDto);
         }
@@ -132,6 +138,14 @@ public class UserOrderController {
             tcc.placeOrder(orderDto);
         } catch (RuntimeException e){
             e.printStackTrace();
+            String message = "";
+            ObjectMapper objectMapper = new ObjectMapper();
+            try{
+                message = objectMapper.writeValueAsString(orderDto);
+            } catch (JsonProcessingException ex) {
+                throw new RuntimeException(ex);
+            }
+            productOrderChannelAdapter.producer(message);
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
 
@@ -242,12 +256,19 @@ public class UserOrderController {
         RefundDto refundDto = modelMapper.map(refundRequest, RefundDto.class);
         refundDto.setUserId(userId);
         boolean result = orderService.createRefund(refundDto);
+        if(result){
+            BaseResponse response = BaseResponse.builder()
+                    .httpStatus(HttpStatus.OK)
+                    .message("OK")
+                    .data(Boolean.valueOf(result))
+                    .build();
+        }
         BaseResponse response = BaseResponse.builder()
-                .httpStatus(HttpStatus.OK)
-                .message("OK")
+                .httpStatus(HttpStatus.BAD_REQUEST)
+                .message("BAD_REQUEST")
                 .data(Boolean.valueOf(result))
                 .build();
-        return new ResponseEntity(response,HttpStatus.OK);
+        return new ResponseEntity(response,HttpStatus.BAD_REQUEST);
     }
 
     @PostMapping("/claim/list")

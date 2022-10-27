@@ -10,4 +10,5 @@ import lombok.*;
 public class OrderProductRequest {
     private Long productId;
     private Integer productQty;
+    private Integer productPrice;
 }
