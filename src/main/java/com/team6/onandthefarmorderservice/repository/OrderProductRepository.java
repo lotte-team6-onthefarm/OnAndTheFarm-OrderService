@@ -12,6 +12,9 @@ import java.util.List;
 public interface OrderProductRepository extends CrudRepository<OrderProduct,Long> {
     List<OrderProduct> findByOrders(Orders orders);
 
+    @Query("select p from OrderProduct p where p.orders.ordersId=:ordersId and p.orderProductStatus='deliveryCompleted'")
+    List<OrderProduct> findByOrdersAndStatus(@Param("ordersId") Long ordersId);
+
     List<OrderProduct> findByOrdersAndOrderProductStatus(Orders orders, String status);
 
     List<OrderProduct> findByOrdersAndSellerIdAndOrderProductStatus(Orders orders, Long sellerId, String status);
