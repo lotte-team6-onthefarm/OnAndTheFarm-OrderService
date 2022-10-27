@@ -19,12 +19,12 @@ public interface ProductServiceClient {
     @GetMapping("/api/user/product/product-service/{product-no}")
     ProductVo findByProductId(@PathVariable("product-no") Long productId);
     @GetMapping("/api/user/product/product-service/no-selling/{seller-no}")
-    List<ProductVo> findNotSellingProduct(Long sellerId);
+    List<ProductVo> findNotSellingProduct(@PathVariable("seller-no") Long sellerId);
     @GetMapping("/api/user/product/product-service/selling/{seller-no}")
-    List<ProductVo> findSellingProduct(Long sellerId);
+    List<ProductVo> findSellingProduct(@PathVariable("seller-no") Long sellerId);
 
     @GetMapping("/api/user/product/product-service/qna/{seller-no}")
-    List<ProductQnaVo> findBeforeAnswerProductQna(Long sellerId);
+    List<ProductQnaVo> findBeforeAnswerProductQna(@PathVariable("seller-no") Long sellerId);
 
 
 }
