@@ -5,6 +5,7 @@ import com.team6.onandthefarmorderservice.entity.Orders;
 import com.team6.onandthefarmorderservice.feignclient.vo.AddableOrderProductResponse;
 import com.team6.onandthefarmorderservice.repository.OrderProductRepository;
 import com.team6.onandthefarmorderservice.repository.OrderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ public class SnsServiceClientServiceImpl implements SnsServiceClientService{
 
     private final OrderProductRepository orderProductRepository;
 
+    @Autowired
     public SnsServiceClientServiceImpl(OrderRepository orderRepository,
                                        OrderProductRepository orderProductRepository){
         this.orderRepository = orderRepository;
