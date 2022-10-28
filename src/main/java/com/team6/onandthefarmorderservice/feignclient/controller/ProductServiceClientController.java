@@ -2,6 +2,7 @@ package com.team6.onandthefarmorderservice.feignclient.controller;
 
 import com.team6.onandthefarmorderservice.feignclient.vo.OrderClientSellerIdAndDateResponse;
 import com.team6.onandthefarmorderservice.feignclient.vo.OrdersByUserResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,6 +21,7 @@ public class ProductServiceClientController {
 
 	ProductServiceClientService productServiceClientService;
 
+	@Autowired
 	public ProductServiceClientController(ProductServiceClientService productServiceClientService) {
 		this.productServiceClientService = productServiceClientService;
 	}
