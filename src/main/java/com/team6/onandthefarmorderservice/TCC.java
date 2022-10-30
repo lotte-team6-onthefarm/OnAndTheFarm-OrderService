@@ -63,6 +63,7 @@ public class TCC {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("adjustmentType", "ORDER");
         requestBody.put("productIdList", orderDto.getProductList());
+        requestBody.put("orderSerial",orderDto.getOrderSerial());
         return tccRestAdapter.doTry(requestURL, requestBody);
     }
 
