@@ -16,7 +16,6 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class TCC {
 
     private final TccRestAdapter tccRestAdapter;
@@ -58,7 +57,8 @@ public class TCC {
      * @param orderDto : 주문에 대한 정보가 담긴 DTO
      * @return
      */
-    private ParticipantLink tryOrder(OrderDto orderDto) {
+    @Transactional
+    ParticipantLink tryOrder(OrderDto orderDto) {
         final String requestURL = "http://"+env.getProperty("serviceurl.product")+"/api/user/product/product-service/order-try";
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("adjustmentType", "ORDER");
@@ -67,7 +67,8 @@ public class TCC {
         return tccRestAdapter.doTry(requestURL, requestBody);
     }
 
-    private ParticipantLink tryPayment(OrderDto orderDto) {
+    @Transactional
+    ParticipantLink tryPayment(OrderDto orderDto) {
         final String requestURL = "http://"+env.getProperty("serviceurl.payment")+"/api/user/payment/payment-service/payment-try";
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("adjustmentType", "ORDER");
