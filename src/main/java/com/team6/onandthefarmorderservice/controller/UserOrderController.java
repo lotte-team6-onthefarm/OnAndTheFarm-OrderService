@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team6.onandthefarmorderservice.TCC;
 import com.team6.onandthefarmorderservice.dto.*;
-import com.team6.onandthefarmorderservice.kafka.ProductOrderChannelAdapter;
 import com.team6.onandthefarmorderservice.service.OrderService;
 import com.team6.onandthefarmorderservice.utils.BaseResponse;
 import com.team6.onandthefarmorderservice.vo.*;
@@ -39,7 +38,7 @@ public class UserOrderController {
 
     private final TCC tcc;
 
-    private final ProductOrderChannelAdapter productOrderChannelAdapter;
+    //private final ProductOrderChannelAdapter productOrderChannelAdapter;
 
     @PostMapping("/sheet")
     // @ApiOperation(value = "단건 주문서 조회")
@@ -138,14 +137,14 @@ public class UserOrderController {
             tcc.placeOrder(orderDto);
         } catch (RuntimeException e){
             e.printStackTrace();
-            String message = "";
-            ObjectMapper objectMapper = new ObjectMapper();
-            try{
-                message = objectMapper.writeValueAsString(orderDto);
-            } catch (JsonProcessingException ex) {
-                throw new RuntimeException(ex);
-            }
-            productOrderChannelAdapter.producer(message);
+//            String message = "";
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            try{
+//                message = objectMapper.writeValueAsString(orderDto);
+//            } catch (JsonProcessingException ex) {
+//                throw new RuntimeException(ex);
+//            }
+//            productOrderChannelAdapter.producer(message);
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
 
