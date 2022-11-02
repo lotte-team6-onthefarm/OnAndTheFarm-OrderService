@@ -83,7 +83,11 @@ public class OrderServiceImp implements OrderService {
                 .userId(orderDto.getUserId())
                 .build(); // 주문 엔티티 생성
         for(OrderProductDto orderProductDto : orderDto.getProductList()){
-            ProductVo productVo = productServiceClient.findByProductId(orderProductDto.getProductId());
+            ProductVo productVo
+                    = circuitbreaker.run(
+                            ()->productServiceClient.findByProductId(orderProductDto.getProductId()),
+                    throwable -> new ProductVo());
+            //ProductVo productVo = productServiceClient.findByProductId(orderProductDto.getProductId());
             orderProductDto.setProductName(productVo.getProductName());
             orderProductDto.setProductPrice(productVo.getProductPrice());
             orderProductDto.setSellerId(productVo.getSellerId());
@@ -120,7 +124,12 @@ public class OrderServiceImp implements OrderService {
     public boolean checkStock(OrderDto orderDto, CircuitBreaker circuitbreaker){
         List<OrderProductDto> orderProducts = orderDto.getProductList();
         for(OrderProductDto orderProduct : orderProducts){
-            ProductVo productVo = productServiceClient.findByProductId(orderProduct.getProductId());
+            ProductVo productVo
+                    = circuitbreaker.run(
+                            ()->productServiceClient.findByProductId(orderProduct.getProductId()),
+                    throwable -> new ProductVo());
+            //ProductVo productVo = productServiceClient.findByProductId(orderProduct.getProductId());
+            if(productVo.getProductTotalStock()==null) return false;
             if(productVo.getProductTotalStock()>=orderProduct.getProductQty()){
                 return true;
             }
@@ -140,9 +149,21 @@ public class OrderServiceImp implements OrderService {
         CircuitBreaker productCircuitbreaker = circuitbreakerFactory.create("productCircuitbreaker");
         CircuitBreaker userCircuitbreaker = circuitbreakerFactory.create("userCircuitbreaker");
 
-        ProductVo product = productServiceClient.findByProductId(orderSheetDto.getProductId());
+        ProductVo product
+                = productCircuitbreaker.run(
+                        ()->productServiceClient.findByProductId(orderSheetDto.getProductId()),
+                throwable -> new ProductVo());
+        //ProductVo product = productServiceClient.findByProductId(orderSheetDto.getProductId());
 
-        UserVo user = userServiceClient.findByUserId(orderSheetDto.getUserId());
+        if(product.getProductPrice()==null){
+            product.setProductPrice(0);
+        }
+
+        UserVo user
+                = userCircuitbreaker.run(
+                        ()->userServiceClient.findByUserId(orderSheetDto.getUserId()),
+                throwable -> new UserVo());
+        //UserVo user = userServiceClient.findByUserId(orderSheetDto.getUserId());
         log.info("제품 정보  =>  "+ product.toString());
         OrderSheetResponse response = OrderSheetResponse.builder()
                 .productId(orderSheetDto.getProductId())
@@ -169,13 +190,22 @@ public class OrderServiceImp implements OrderService {
         /**
          * 유저id로 카트 정보 + 상품 정보 가져오기
          */
+        CircuitBreaker circuitBreaker = circuitbreakerFactory.create("product_circuitbreaker");
 
-        List<CartVo> carts = cartServiceClient.findByUserId(userId);
+        List<CartVo> carts
+                = circuitBreaker.run(
+                        ()->cartServiceClient.findByUserId(userId),
+                throwable -> new ArrayList<>());
+        //List<CartVo> carts = cartServiceClient.findByUserId(userId);
 
         List<OrderFindOneResponse> list = new ArrayList<>();
 
         for(CartVo cart :carts){
-            ProductVo product = productServiceClient.findByProductId(cart.getProductId());
+            ProductVo product
+                    = circuitBreaker.run(
+                            ()->productServiceClient.findByProductId(cart.getProductId()),
+                    throwable -> new ProductVo());
+            //ProductVo product = productServiceClient.findByProductId(cart.getProductId());
             OrderFindOneResponse response = OrderFindOneResponse.builder()
                     .productQty(cart.getCartQty())
                     .productName(product.getProductName())
@@ -195,6 +225,8 @@ public class OrderServiceImp implements OrderService {
      * @return
      */
     public OrderSellerResponseListResponse findSellerOrders(OrderSellerFindDto orderSellerFindDto){
+        CircuitBreaker userCircuitbreaker = circuitbreakerFactory.create("userCircuitbreaker");
+
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 
@@ -225,7 +257,11 @@ public class OrderServiceImp implements OrderService {
             List<OrderSellerResponse> orderResponse = new ArrayList<>();
             int totalPrice = 0;
             Optional<Orders> order = orderRepository.findById(orderId);
-            UserVo user = userServiceClient.findByUserId(order.get().getUserId());
+            UserVo user
+                    = userCircuitbreaker.run(
+                            ()->userServiceClient.findByUserId(order.get().getUserId()),
+                    throwable -> new UserVo());
+            //UserVo user = userServiceClient.findByUserId(order.get().getUserId());
 
             for(OrderProduct orderProduct : orderProductList){
                 if(!orderProduct.getOrders().getOrdersId().equals(orderId)) continue;
@@ -306,12 +342,19 @@ public class OrderServiceImp implements OrderService {
      * @return
      */
     public OrderUserResponseListResponse findUserOrders(OrderUserFindDto orderUserFindDto){
+        CircuitBreaker userCircuitbreaker = circuitbreakerFactory.create("userCircuitbreaker");
+
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 
         List<OrderUserResponseList> response = new ArrayList<>();
 
-        UserVo user = userServiceClient.findByUserId(Long.valueOf(orderUserFindDto.getUserId()));
+        UserVo user
+                = userCircuitbreaker.run(
+                        ()->userServiceClient
+                                .findByUserId(Long.valueOf(orderUserFindDto.getUserId())),
+                throwable -> new UserVo());
+        //UserVo user = userServiceClient.findByUserId(Long.valueOf(orderUserFindDto.getUserId()));
 
         List<Orders> myOrders = orderRepository.findByUserId(user.getUserId());
 
@@ -435,12 +478,18 @@ public class OrderServiceImp implements OrderService {
      * @return
      */
     public OrderUserDetailResponse findUserOrderDetail(String orderSerial){
+        CircuitBreaker userCircuitbreaker = circuitbreakerFactory.create("userCircuitbreaker");
+
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 
         Orders orders = orderRepository.findByOrdersSerial(orderSerial);
 
-        UserVo user = userServiceClient.findByUserId(orders.getUserId());
+        UserVo user
+                = userCircuitbreaker.run(
+                        ()->userServiceClient.findByUserId(orders.getUserId()),
+                throwable -> new UserVo());
+        //UserVo user = userServiceClient.findByUserId(orders.getUserId());
 
         List<OrderProduct> orderProducts = orderProductRepository.findByOrders(orders); // 주문에 대한 모든 제품가져옴
 
@@ -480,6 +529,7 @@ public class OrderServiceImp implements OrderService {
     }
 
     /**
+     * 아직 써킷브레이커 안붙임
      * 취소 생성해주는 메서드
      * @param refundDto
      * @return
@@ -566,6 +616,8 @@ public class OrderServiceImp implements OrderService {
      * @return
      */
     public OrderSellerResultResponse findSellerClaims(OrderSellerRequest orderSellerRequest){
+        CircuitBreaker userCircuitbreaker = circuitbreakerFactory.create("userCircuitbreaker");
+
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 
@@ -591,7 +643,11 @@ public class OrderServiceImp implements OrderService {
         for(OrderProduct orderProduct : orderProductsSO1){
             OrderSellerResponse orderSellerResponse = modelMapper.map(orderProduct,OrderSellerResponse.class);
             Optional<Orders> orders = orderRepository.findById(orderProduct.getOrders().getOrdersId());
-            UserVo user = userServiceClient.findByUserId(orders.get().getUserId());
+            UserVo user
+                    = userCircuitbreaker.run(
+                            ()->userServiceClient.findByUserId(orders.get().getUserId()),
+                    throwable -> new UserVo());
+            //UserVo user = userServiceClient.findByUserId(orders.get().getUserId());
 
             orderSellerResponse.setOrdersDate(orders.get().getOrdersDate());
             orderSellerResponse.setOrdersSerial(orders.get().getOrdersSerial());
@@ -643,11 +699,17 @@ public class OrderServiceImp implements OrderService {
      * @return
      */
     public OrderRefundResultResponse findUserClaims(OrderUserFindDto orderUserFindDto){
+        CircuitBreaker userCircuitbreaker = circuitbreakerFactory.create("userCircuitbreaker");
+
         List<OrderRefundResponse> responses = new ArrayList<>();
 
         List<Refund> refunds = refundRepository.findByUserId(Long.valueOf(orderUserFindDto.getUserId()));
 
-        UserVo user = userServiceClient.findByUserId(Long.valueOf(orderUserFindDto.getUserId()));
+        UserVo user
+                = userCircuitbreaker.run(
+                    ()->userServiceClient.findByUserId(Long.valueOf(orderUserFindDto.getUserId())),
+                throwable -> new UserVo());
+        //UserVo user = userServiceClient.findByUserId(Long.valueOf(orderUserFindDto.getUserId()));
 
         List<Orders> orders = orderRepository.findByUserId(user.getUserId());
 
@@ -728,9 +790,16 @@ public class OrderServiceImp implements OrderService {
      * @return
      */
     public RefundDetailResponse findRefundDetail(Long orderProductId){
+        CircuitBreaker userCircuitbreaker = circuitbreakerFactory.create("userCircuitbreaker");
+
         Refund refund = refundRepository.findByOrderProductId(orderProductId);
         Optional<OrderProduct> orderProduct = orderProductRepository.findById(orderProductId);
-        UserVo user = userServiceClient.findByUserId(orderProduct.get().getOrders().getUserId());
+
+        UserVo user
+                = userCircuitbreaker.run(
+                        ()->userServiceClient.findByUserId(orderProduct.get().getOrders().getUserId()),
+                throwable -> new UserVo());
+        //UserVo user = userServiceClient.findByUserId(orderProduct.get().getOrders().getUserId());
         RefundDetailResponse response = RefundDetailResponse.builder()
                 .cancelDetail(refund.getRefundContent())
                 .productName(orderProduct.get().getOrderProductName())
@@ -804,15 +873,28 @@ public class OrderServiceImp implements OrderService {
 
     @Override
     public OrdersConditionResponse findOrdersCondition(Long sellerId) {
+        CircuitBreaker productCircuitbreaker = circuitbreakerFactory.create("productCircuitbreaker");
 
         List<Orders> beforeDelivery = orderRepository.findBeforeDeliveryOrders(sellerId);
         List<OrderProduct> requestRefund = orderProductRepository.findRequestRefundOrderProduct(sellerId);
         List<OrderProduct> cancelOrders = orderProductRepository.findCancelOrdersOrderProduct(sellerId);
         List<Orders> delivering = orderRepository.findDeliveringOrders(sellerId);
         List<Orders> deliverComplete = orderRepository.findDeliverCompleteOrders(sellerId);
-        List<ProductVo> notSelling = productServiceClient.findNotSellingProduct(sellerId);
-        List<ProductVo> selling = productServiceClient.findSellingProduct(sellerId);
-        List<ProductQnaVo> beforeAnswer = productServiceClient.findBeforeAnswerProductQna(sellerId);
+        List<ProductVo> notSelling
+                = productCircuitbreaker.run(
+                        ()->productServiceClient.findNotSellingProduct(sellerId),
+                throwable -> new ArrayList<>());
+        //List<ProductVo> notSelling = productServiceClient.findNotSellingProduct(sellerId);
+        List<ProductVo> selling
+                = productCircuitbreaker.run(
+                ()->productServiceClient.findSellingProduct(sellerId),
+                throwable -> new ArrayList<>());
+        //List<ProductVo> selling = productServiceClient.findSellingProduct(sellerId);
+        List<ProductQnaVo> beforeAnswer
+                = productCircuitbreaker.run(
+                ()->productServiceClient.findBeforeAnswerProductQna(sellerId),
+                throwable -> new ArrayList<>());
+        //List<ProductQnaVo> beforeAnswer = productServiceClient.findBeforeAnswerProductQna(sellerId);
 
         OrdersConditionResponse ordersConditionResponse = OrdersConditionResponse.builder()
                 .beforeDelivery(beforeDelivery.size())
