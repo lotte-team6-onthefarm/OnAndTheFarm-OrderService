@@ -28,4 +28,6 @@ public class OrderDto {
     private Map<Long,Long> prodSeller;
 
     private String orderSerial;
+
+    private Long feedNumber;
 }

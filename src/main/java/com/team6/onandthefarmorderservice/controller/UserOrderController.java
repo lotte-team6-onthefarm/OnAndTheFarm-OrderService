@@ -120,6 +120,7 @@ public class UserOrderController {
                 .orderPhone(orderRequest.getOrderPhone())
                 .orderAddress(orderRequest.getOrderAddress())
                 .userId(userId)
+                .feedNumber(orderRequest.getFeedNumber())
                 .orderSerial(String.valueOf((new Date()).getTime()))
                 .productList(new ArrayList<>())
                 .build();

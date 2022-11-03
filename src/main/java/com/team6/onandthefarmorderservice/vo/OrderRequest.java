@@ -19,4 +19,5 @@ public class OrderRequest {
     private String orderAddress;
     private String orderPhone;
     private String orderRequest;
+    private Long feedNumber;
 }
