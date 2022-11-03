@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -155,10 +152,10 @@ public class UserOrderController {
     }
 
 
-    @PostMapping("/list")
+    @GetMapping("/list")
     // @ApiOperation(value = "유저 주문 내역 조회")
     public ResponseEntity<BaseResponse<OrderUserResponseListResponse>> findUserAllOrders(
-            @ApiIgnore Principal principal, @RequestBody OrderUserRequest orderUserRequest){
+            @ApiIgnore Principal principal, @RequestParam Map<String, String> request){
 
         if(principal == null){
             BaseResponse baseResponse = BaseResponse.builder()
@@ -171,10 +168,11 @@ public class UserOrderController {
         String[] principalInfo = principal.getName().split(" ");
         String userId = principalInfo[0];
 
-        ModelMapper modelMapper = new ModelMapper();
-        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
-        OrderUserFindDto orderUserFindDto = modelMapper.map(orderUserRequest, OrderUserFindDto.class);
+        OrderUserFindDto orderUserFindDto = new OrderUserFindDto();
         orderUserFindDto.setUserId(userId);
+        orderUserFindDto.setStartDate(request.get("startDate"));
+        orderUserFindDto.setEndDate(request.get("endDate"));
+        orderUserFindDto.setPageNumber(Integer.parseInt(request.get("pageNumber")));
         OrderUserResponseListResponse responses  = orderService.findUserOrders(orderUserFindDto);
         BaseResponse response = BaseResponse.builder()
                 .httpStatus(HttpStatus.OK)
@@ -271,10 +269,10 @@ public class UserOrderController {
         return new ResponseEntity(response,HttpStatus.BAD_REQUEST);
     }
 
-    @PostMapping("/claim/list")
+    @GetMapping("/claim/list")
     // @ApiOperation(value = "유저 취소/반품 내역 조회")
     public ResponseEntity<BaseResponse<OrderRefundResultResponse>> findUserClaims(
-            @ApiIgnore Principal principal, @RequestBody OrderUserRequest orderUserRequest){
+            @ApiIgnore Principal principal, @RequestParam Map<String, String> request){
 
         if(principal == null){
             BaseResponse baseResponse = BaseResponse.builder()
@@ -287,10 +285,11 @@ public class UserOrderController {
         String[] principalInfo = principal.getName().split(" ");
         String userId = principalInfo[0];
 
-        ModelMapper modelMapper = new ModelMapper();
-        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
-        OrderUserFindDto orderUserFindDto = modelMapper.map(orderUserRequest,OrderUserFindDto.class);
+        OrderUserFindDto orderUserFindDto = new OrderUserFindDto();
         orderUserFindDto.setUserId(userId);
+        orderUserFindDto.setStartDate(request.get("startDate"));
+        orderUserFindDto.setEndDate(request.get("endDate"));
+        orderUserFindDto.setPageNumber(Integer.parseInt(request.get("pageNumber")));
         OrderRefundResultResponse responseList = orderService.findUserClaims(orderUserFindDto);
         BaseResponse<OrderRefundResultResponse> response = BaseResponse.<OrderRefundResultResponse>builder()
                 .httpStatus(HttpStatus.OK)
