@@ -56,6 +56,15 @@ public class TccRestAdapter {
         }
     }
 
+    public void pointConfirm(URI confirmUrl) {
+        try {
+            restTemplate.put(confirmUrl, null);
+        } catch (RestClientException e) {
+            throw new RuntimeException(String.format("Confirm Error[URI : %s]",
+                    confirmUrl.toString()), e);
+        }
+    }
+
     /**
      * 주문 실패시 예약된 리소스들을 cancel해주는 메서드
      * @param participantLinks

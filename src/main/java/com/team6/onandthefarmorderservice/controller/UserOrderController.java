@@ -117,7 +117,6 @@ public class UserOrderController {
                 .orderPhone(orderRequest.getOrderPhone())
                 .orderAddress(orderRequest.getOrderAddress())
                 .userId(userId)
-                .feedNumber(orderRequest.getFeedNumber())
                 .orderSerial(String.valueOf((new Date()).getTime()))
                 .productList(new ArrayList<>())
                 .build();
@@ -151,11 +150,80 @@ public class UserOrderController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    /**
+     * 넛지 포인트를 위한 주문 메서드
+     * @param principal
+     * @param orderRequest
+     * @return
+     */
+    @PostMapping("/point")
+    public ResponseEntity<BaseResponse> createPointOrder(
+            @ApiIgnore Principal principal, @RequestBody PointOrderRequest orderRequest){
+
+        if(principal == null){
+            BaseResponse baseResponse = BaseResponse.builder()
+                    .httpStatus(HttpStatus.FORBIDDEN)
+                    .message("no authorization")
+                    .build();
+            return new ResponseEntity(baseResponse, HttpStatus.BAD_REQUEST);
+        }
+
+        String[] principalInfo = principal.getName().split(" ");
+        Long userId = Long.parseLong(principalInfo[0]);
+
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+        OrderDto orderDto = OrderDto.builder()
+                .orderRecipientName(orderRequest.getOrderRecipientName())
+                .orderRequest(orderRequest.getOrderRequest())
+                .orderPhone(orderRequest.getOrderPhone())
+                .orderAddress(orderRequest.getOrderAddress())
+                .userId(userId)
+                .orderSerial(String.valueOf((new Date()).getTime()))
+                .productList(new ArrayList<>())
+                .build();
+
+        for(OrderProductRequest order : orderRequest.getProductList()){
+            OrderProductDto orderProductDto = OrderProductDto.builder()
+                    .productQty(order.getProductQty())
+                    .productId(order.getProductId())
+                    .productPrice(order.getProductPrice())
+                    .build();
+            orderDto.getProductList().add(orderProductDto);
+        }
+
+        try{
+            tcc.placePointOrder(orderDto,orderRequest.getPointMemberId());
+        } catch (RuntimeException e){
+            e.printStackTrace();
+            BaseResponse response = BaseResponse.builder()
+                    .httpStatus(HttpStatus.BAD_REQUEST)
+                    .message("주문 실패")
+                    .build();
+//            String message = "";
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            try{
+//                message = objectMapper.writeValueAsString(orderDto);
+//            } catch (JsonProcessingException ex) {
+//                throw new RuntimeException(ex);
+//            }
+//            productOrderChannelAdapter.producer(message);
+            return new ResponseEntity(response,HttpStatus.BAD_REQUEST);
+        }
+
+        //orderService.createOrder(orderDto);
+        BaseResponse baseResponse = BaseResponse.builder()
+                .httpStatus(HttpStatus.OK)
+                .message("주문 성공")
+                .build();
+        return new ResponseEntity(baseResponse,HttpStatus.OK);
+    }
+
 
     @GetMapping("/list")
     // @ApiOperation(value = "유저 주문 내역 조회")
     public ResponseEntity<BaseResponse<OrderUserResponseListResponse>> findUserAllOrders(
-            @ApiIgnore Principal principal, @RequestParam Map<String, String> request){
+            @ApiIgnore Principal principal, @RequestParam Integer pageNumber){
 
         if(principal == null){
             BaseResponse baseResponse = BaseResponse.builder()
@@ -168,11 +236,11 @@ public class UserOrderController {
         String[] principalInfo = principal.getName().split(" ");
         String userId = principalInfo[0];
 
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         OrderUserFindDto orderUserFindDto = new OrderUserFindDto();
         orderUserFindDto.setUserId(userId);
-        orderUserFindDto.setStartDate(request.get("startDate"));
-        orderUserFindDto.setEndDate(request.get("endDate"));
-        orderUserFindDto.setPageNumber(Integer.parseInt(request.get("pageNumber")));
+        orderUserFindDto.setPageNumber(pageNumber);
         OrderUserResponseListResponse responses  = orderService.findUserOrders(orderUserFindDto);
         BaseResponse response = BaseResponse.builder()
                 .httpStatus(HttpStatus.OK)
@@ -272,7 +340,8 @@ public class UserOrderController {
     @GetMapping("/claim/list")
     // @ApiOperation(value = "유저 취소/반품 내역 조회")
     public ResponseEntity<BaseResponse<OrderRefundResultResponse>> findUserClaims(
-            @ApiIgnore Principal principal, @RequestParam Map<String, String> request){
+            @ApiIgnore Principal principal, @RequestParam Integer pageNumber){
+
 
         if(principal == null){
             BaseResponse baseResponse = BaseResponse.builder()
@@ -285,11 +354,11 @@ public class UserOrderController {
         String[] principalInfo = principal.getName().split(" ");
         String userId = principalInfo[0];
 
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         OrderUserFindDto orderUserFindDto = new OrderUserFindDto();
         orderUserFindDto.setUserId(userId);
-        orderUserFindDto.setStartDate(request.get("startDate"));
-        orderUserFindDto.setEndDate(request.get("endDate"));
-        orderUserFindDto.setPageNumber(Integer.parseInt(request.get("pageNumber")));
+        orderUserFindDto.setPageNumber(pageNumber);
         OrderRefundResultResponse responseList = orderService.findUserClaims(orderUserFindDto);
         BaseResponse<OrderRefundResultResponse> response = BaseResponse.<OrderRefundResultResponse>builder()
                 .httpStatus(HttpStatus.OK)
