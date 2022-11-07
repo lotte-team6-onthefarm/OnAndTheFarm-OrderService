@@ -51,6 +51,42 @@ public class TCC {
     }
 
     /**
+     * 넛지 포인트를 위한 메서드
+     * @param orderDto
+     */
+    public void placePointOrder(OrderDto orderDto,Long pointMemberId) {
+        List<ParticipantLink> participantLinks = new ArrayList<>();
+
+        // 재고 차감(Try)
+        participantLinks.add(tryOrder(orderDto));
+
+        // 결제 시도(try)
+        participantLinks.add(tryPayment(orderDto));
+
+        // 포인트 시도(try)
+        participantLinks.add(tryPoint(orderDto,pointMemberId));
+
+        try{
+            // 주문 생성
+            orderService.createOrder(orderDto);
+        }catch (RuntimeException e){
+            e.printStackTrace();
+            tccRestAdapter.cancelAll(participantLinks);
+            throw new RuntimeException();
+        }
+
+
+        // 재고 차감 확정(Confirm)
+        tccRestAdapter.stockConfirm(participantLinks.get(0).getUri());
+
+        // 결제 확정(Confirm)
+        tccRestAdapter.paymentConfirm(participantLinks.get(1).getUri());
+
+        // 포인트 확정(Confirm)
+        tccRestAdapter.pointConfirm(participantLinks.get(2).getUri());
+    }
+
+    /**
      * orderDto 안에는
      * adjustmentType : 해당 body의 type
      * productIdList : orderProductList(주문서 내에 담긴 상품들의 정보(productId, qty)
@@ -73,6 +109,16 @@ public class TCC {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("adjustmentType", "ORDER");
         requestBody.put("productIdList", orderDto.getProductList());
+        requestBody.put("orderSerial",orderDto.getOrderSerial());
+        return tccRestAdapter.doTry(requestURL, requestBody);
+    }
+
+    @Transactional
+    ParticipantLink tryPoint(OrderDto orderDto,Long pointMemberId) {
+        final String requestURL = "http://"+env.getProperty("serviceurl.point")+"/api/user/members/member-service/member-try";
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("adjustmentType", "ORDER");
+        requestBody.put("memberId", String.valueOf(pointMemberId)); // 멤버 id 받음
         requestBody.put("orderSerial",orderDto.getOrderSerial());
         return tccRestAdapter.doTry(requestURL, requestBody);
     }
