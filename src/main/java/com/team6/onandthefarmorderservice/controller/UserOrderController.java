@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -98,7 +95,7 @@ public class UserOrderController {
      * @return
      */
     @PostMapping()
-    public ResponseEntity<BaseResponse> createOrder(
+    public ResponseEntity createOrder(
             @ApiIgnore Principal principal, @RequestBody OrderRequest orderRequest){
 
         if(principal == null){
@@ -137,10 +134,6 @@ public class UserOrderController {
             tcc.placeOrder(orderDto);
         } catch (RuntimeException e){
             e.printStackTrace();
-            BaseResponse response = BaseResponse.builder()
-                    .httpStatus(HttpStatus.BAD_REQUEST)
-                    .message("주문 실패")
-                    .build();
 //            String message = "";
 //            ObjectMapper objectMapper = new ObjectMapper();
 //            try{
@@ -149,15 +142,12 @@ public class UserOrderController {
 //                throw new RuntimeException(ex);
 //            }
 //            productOrderChannelAdapter.producer(message);
-            return new ResponseEntity(response,HttpStatus.BAD_REQUEST);
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
 
         //orderService.createOrder(orderDto);
-        BaseResponse baseResponse = BaseResponse.builder()
-                .httpStatus(HttpStatus.OK)
-                .message("주문 성공")
-                .build();
-        return new ResponseEntity(baseResponse,HttpStatus.OK);
+
+        return new ResponseEntity(HttpStatus.OK);
     }
 
     /**
@@ -351,6 +341,7 @@ public class UserOrderController {
     // @ApiOperation(value = "유저 취소/반품 내역 조회")
     public ResponseEntity<BaseResponse<OrderRefundResultResponse>> findUserClaims(
             @ApiIgnore Principal principal, @RequestParam Integer pageNumber){
+
 
         if(principal == null){
             BaseResponse baseResponse = BaseResponse.builder()

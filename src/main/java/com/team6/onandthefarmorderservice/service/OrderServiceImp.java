@@ -7,16 +7,14 @@ import com.team6.onandthefarmorderservice.entity.Orders;
 import com.team6.onandthefarmorderservice.entity.Refund;
 import com.team6.onandthefarmorderservice.feignclient.CartServiceClient;
 import com.team6.onandthefarmorderservice.feignclient.ProductServiceClient;
+import com.team6.onandthefarmorderservice.feignclient.SnsServiceClient;
 import com.team6.onandthefarmorderservice.feignclient.UserServiceClient;
 import com.team6.onandthefarmorderservice.repository.OrderProductRepository;
 import com.team6.onandthefarmorderservice.repository.OrderRepository;
 import com.team6.onandthefarmorderservice.repository.RefundRepository;
 import com.team6.onandthefarmorderservice.utils.DateUtils;
 import com.team6.onandthefarmorderservice.vo.*;
-import com.team6.onandthefarmorderservice.vo.feignclient.CartVo;
-import com.team6.onandthefarmorderservice.vo.feignclient.ProductQnaVo;
-import com.team6.onandthefarmorderservice.vo.feignclient.ProductVo;
-import com.team6.onandthefarmorderservice.vo.feignclient.UserVo;
+import com.team6.onandthefarmorderservice.vo.feignclient.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -41,6 +39,8 @@ public class OrderServiceImp implements OrderService {
     private final UserServiceClient userServiceClient;
 
     private final CartServiceClient cartServiceClient;
+
+    private final SnsServiceClient snsServiceClient;
 
     private final OrderRepository orderRepository;
 
@@ -114,6 +114,13 @@ public class OrderServiceImp implements OrderService {
             orderProductRepository.save(orderProduct); // 각각의 주문 상품 생성
         }
         orderRepository.findById(ordersEntity.getOrdersId()).get().setOrdersTotalPrice(totalPrice); // 총 주문액 set
+
+        if(orderDto.getFeedNumber() != null){
+            FeedVo feedVo = snsServiceClient.findByFeedNumber(orderDto.getFeedNumber());
+            UserVo userVo = userServiceClient.findByUserId(feedVo.getMemberId());
+            //User Entity의 point 값을 update 해야함!!
+        }
+
         return Boolean.TRUE;
     }
     /**
