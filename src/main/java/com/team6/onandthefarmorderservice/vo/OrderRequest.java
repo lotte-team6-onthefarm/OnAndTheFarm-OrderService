@@ -19,5 +19,7 @@ public class OrderRequest {
     private String orderAddress;
     private String orderPhone;
     private String orderRequest;
-    private Long feedNumber;
+    private String imp_uid;
+    private String merchant_uid;
+    private String  paid_amount;
 }

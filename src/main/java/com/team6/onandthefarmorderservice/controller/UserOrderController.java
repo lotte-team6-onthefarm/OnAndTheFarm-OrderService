@@ -119,6 +119,9 @@ public class UserOrderController {
                 .userId(userId)
                 .orderSerial(String.valueOf((new Date()).getTime()))
                 .productList(new ArrayList<>())
+                .merchant_uid(orderRequest.getMerchant_uid())
+                .imp_uid(orderRequest.getImp_uid())
+                .paid_amount(orderRequest.getPaid_amount())
                 .build();
 
         for(OrderProductRequest order : orderRequest.getProductList()){

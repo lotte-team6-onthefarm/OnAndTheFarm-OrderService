@@ -110,6 +110,9 @@ public class TCC {
         requestBody.put("adjustmentType", "ORDER");
         requestBody.put("productIdList", orderDto.getProductList());
         requestBody.put("orderSerial",orderDto.getOrderSerial());
+        requestBody.put("imp_uid",orderDto.getImp_uid());
+        requestBody.put("merchant_uid",orderDto.getMerchant_uid());
+        requestBody.put("paid_amount",orderDto.getPaid_amount());
         return tccRestAdapter.doTry(requestURL, requestBody);
     }
 
