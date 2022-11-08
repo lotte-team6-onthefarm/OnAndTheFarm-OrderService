@@ -30,4 +30,10 @@ public class OrderDto {
     private String orderSerial;
 
     private Long feedNumber;
+
+    private String imp_uid;
+
+    private String merchant_uid;
+
+    private String  paid_amount;
 }
