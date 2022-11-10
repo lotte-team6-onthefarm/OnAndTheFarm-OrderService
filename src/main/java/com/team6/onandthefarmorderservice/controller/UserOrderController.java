@@ -5,9 +5,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team6.onandthefarmorderservice.TCC;
 import com.team6.onandthefarmorderservice.dto.*;
+import com.team6.onandthefarmorderservice.feignclient.PaymentServiceClient;
 import com.team6.onandthefarmorderservice.service.OrderService;
 import com.team6.onandthefarmorderservice.utils.BaseResponse;
 import com.team6.onandthefarmorderservice.vo.*;
+import com.team6.onandthefarmorderservice.vo.feignclient.PaymentVo;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
@@ -32,6 +34,8 @@ import java.util.*;
 **/
 public class UserOrderController {
     private final OrderService orderService;
+
+    private final PaymentServiceClient paymentServiceClient;
 
     private final TCC tcc;
 
@@ -95,7 +99,7 @@ public class UserOrderController {
      * @return
      */
     @PostMapping()
-    public ResponseEntity createOrder(
+    public ResponseEntity<BaseResponse> createOrder(
             @ApiIgnore Principal principal, @RequestBody OrderRequest orderRequest){
 
         if(principal == null){
@@ -137,6 +141,16 @@ public class UserOrderController {
             tcc.placeOrder(orderDto);
         } catch (RuntimeException e){
             e.printStackTrace();
+            BaseResponse response = BaseResponse.builder()
+                    .httpStatus(HttpStatus.BAD_REQUEST)
+                    .message("주문 실패")
+                    .build();
+            PaymentVo paymentVo = PaymentVo.builder()
+                    .imp_uid(orderDto.getImp_uid())
+                    .merchant_uid(orderDto.getMerchant_uid())
+                    .paid_amount(orderDto.getPaid_amount())
+                    .build();
+            paymentServiceClient.cancelPayment(paymentVo);
 //            String message = "";
 //            ObjectMapper objectMapper = new ObjectMapper();
 //            try{
@@ -145,7 +159,7 @@ public class UserOrderController {
 //                throw new RuntimeException(ex);
 //            }
 //            productOrderChannelAdapter.producer(message);
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity(response,HttpStatus.BAD_REQUEST);
         }
 
         //orderService.createOrder(orderDto);
