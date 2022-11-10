@@ -217,6 +217,12 @@ public class UserOrderController {
                     .httpStatus(HttpStatus.BAD_REQUEST)
                     .message("주문 실패")
                     .build();
+            PaymentVo paymentVo = PaymentVo.builder()
+                    .imp_uid(orderDto.getImp_uid())
+                    .merchant_uid(orderDto.getMerchant_uid())
+                    .paid_amount(orderDto.getPaid_amount())
+                    .build();
+            paymentServiceClient.cancelPayment(paymentVo);
 //            String message = "";
 //            ObjectMapper objectMapper = new ObjectMapper();
 //            try{
