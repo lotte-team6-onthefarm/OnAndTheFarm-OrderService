@@ -13,6 +13,6 @@ public interface UserServiceClient {
      * @param userId
      * @return
      */
-    @GetMapping("/api/user/members/member-service/{user-no}")
+    @GetMapping("/api/feign/user/members/member-service/{user-no}")
     UserVo findByUserId(@PathVariable("user-no") Long userId);
 }

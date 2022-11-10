@@ -20,7 +20,7 @@ public class SnsServiceClientController {
         this.snsServiceClientService = snsServiceClientService;
     }
 
-    @GetMapping("/api/user/order/order-service/list/add/{user-no}")
+    @GetMapping("/api/feign/user/order/order-service/list/add/{user-no}")
     List<AddableOrderProductResponse> findAddableOrderProductList(@PathVariable("user-no") Long memberId){
         return snsServiceClientService.findAddableOrderProductList(memberId);
     }

@@ -15,6 +15,6 @@ public interface CartServiceClient {
      * @param userId
      * @return
      */
-    @GetMapping("/api/user/cart/product-service/{user-no}")
+    @GetMapping("/api/feign/user/cart/product-service/{user-no}")
     List<CartVo> findByUserId(@PathVariable("user-no") Long userId);
 }
