@@ -11,5 +11,5 @@ import java.util.Date;
 @NoArgsConstructor
 public class ParticipantLink {
     private URI uri;
-    private Date expires;
+    private String expires;
 }
