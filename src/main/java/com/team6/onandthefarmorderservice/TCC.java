@@ -95,7 +95,7 @@ public class TCC {
      */
     @Transactional
     ParticipantLink tryOrder(OrderDto orderDto) {
-        final String requestURL = "http://"+env.getProperty("serviceurl.product")+"/api/user/product/product-service/order-try";
+        final String requestURL = "http://"+env.getProperty("serviceurl.product")+"/api/feign/user/product/product-service/order-try";
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("adjustmentType", "ORDER");
         requestBody.put("productIdList", orderDto.getProductList());
@@ -105,7 +105,7 @@ public class TCC {
 
     @Transactional
     ParticipantLink tryPayment(OrderDto orderDto) {
-        final String requestURL = "http://"+env.getProperty("serviceurl.payment")+"/api/user/payment/payment-service/payment-try";
+        final String requestURL = "http://"+env.getProperty("serviceurl.payment")+"/api/feign/user/payment/payment-service/payment-try";
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("adjustmentType", "ORDER");
         requestBody.put("productIdList", orderDto.getProductList());
@@ -118,7 +118,7 @@ public class TCC {
 
     @Transactional
     ParticipantLink tryPoint(OrderDto orderDto,Long pointMemberId) {
-        final String requestURL = "http://"+env.getProperty("serviceurl.point")+"/api/user/members/member-service/member-try";
+        final String requestURL = "http://"+env.getProperty("serviceurl.point")+"/api/feign/user/members/member-service/member-try";
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("adjustmentType", "ORDER");
         requestBody.put("memberId", String.valueOf(pointMemberId)); // 멤버 id 받음
