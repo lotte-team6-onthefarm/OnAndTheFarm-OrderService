@@ -16,14 +16,14 @@ public interface ProductServiceClient {
      * @param productId
      * @return
      */
-    @GetMapping("/api/user/product/product-service/{product-no}")
+    @GetMapping("/api/feign/user/product/product-service/{product-no}")
     ProductVo findByProductId(@PathVariable("product-no") Long productId);
-    @GetMapping("/api/user/product/product-service/no-selling/{seller-no}")
+    @GetMapping("/api/feign/user/product/product-service/no-selling/{seller-no}")
     List<ProductVo> findNotSellingProduct(@PathVariable("seller-no") Long sellerId);
-    @GetMapping("/api/user/product/product-service/selling/{seller-no}")
+    @GetMapping("/api/feign/user/product/product-service/selling/{seller-no}")
     List<ProductVo> findSellingProduct(@PathVariable("seller-no") Long sellerId);
 
-    @GetMapping("/api/user/product/product-service/qna/{seller-no}")
+    @GetMapping("/api/feign/user/product/product-service/qna/{seller-no}")
     List<ProductQnaVo> findBeforeAnswerProductQna(@PathVariable("seller-no") Long sellerId);
 
 

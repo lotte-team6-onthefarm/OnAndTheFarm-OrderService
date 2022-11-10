@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "sns-service")
 public interface SnsServiceClient {
 
-    @GetMapping("/api/user/feed/sns-service/{feed-no}")
+    @GetMapping("/api/feign/user/feed/sns-service/{feed-no}")
     FeedVo findByFeedNumber(@PathVariable("feed-no") Long feedNumber);
 }
