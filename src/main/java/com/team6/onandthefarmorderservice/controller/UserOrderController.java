@@ -210,7 +210,7 @@ public class UserOrderController {
         }
 
         try{
-            tcc.placePointOrder(orderDto,orderRequest.getPointMemberId());
+            tcc.placePointOrder(orderDto,orderRequest.getFeedNumber());
         } catch (RuntimeException e){
             e.printStackTrace();
             BaseResponse response = BaseResponse.builder()

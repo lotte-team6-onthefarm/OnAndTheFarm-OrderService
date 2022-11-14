@@ -15,5 +15,8 @@ public class PointOrderRequest {
     private String orderAddress;
     private String orderPhone;
     private String orderRequest;
-    private Long pointMemberId;
+    private Long feedNumber;
+    private String imp_uid;
+    private String merchant_uid;
+    private String  paid_amount;
 }

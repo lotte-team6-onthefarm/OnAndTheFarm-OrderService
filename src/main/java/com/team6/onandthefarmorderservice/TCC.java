@@ -54,7 +54,7 @@ public class TCC {
      * 넛지 포인트를 위한 메서드
      * @param orderDto
      */
-    public void placePointOrder(OrderDto orderDto,Long pointMemberId) {
+    public void placePointOrder(OrderDto orderDto,Long feedNumber) {
         List<ParticipantLink> participantLinks = new ArrayList<>();
 
         // 재고 차감(Try)
@@ -64,7 +64,7 @@ public class TCC {
         participantLinks.add(tryPayment(orderDto));
 
         // 포인트 시도(try)
-        participantLinks.add(tryPoint(orderDto,pointMemberId));
+        participantLinks.add(tryPoint(orderDto,feedNumber));
 
         try{
             // 주문 생성
@@ -117,11 +117,11 @@ public class TCC {
     }
 
     @Transactional
-    ParticipantLink tryPoint(OrderDto orderDto,Long pointMemberId) {
+    ParticipantLink tryPoint(OrderDto orderDto,Long feedNumber) {
         final String requestURL = "http://"+env.getProperty("serviceurl.point")+"/api/feign/user/members/member-service/member-try";
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("adjustmentType", "ORDER");
-        requestBody.put("memberId", String.valueOf(pointMemberId)); // 멤버 id 받음
+        requestBody.put("feedNumber", String.valueOf(feedNumber)); // feed id 받음
         requestBody.put("orderSerial",orderDto.getOrderSerial());
         return tccRestAdapter.doTry(requestURL, requestBody);
     }
