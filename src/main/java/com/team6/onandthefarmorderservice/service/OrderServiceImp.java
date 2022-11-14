@@ -114,13 +114,6 @@ public class OrderServiceImp implements OrderService {
             orderProductRepository.save(orderProduct); // 각각의 주문 상품 생성
         }
         orderRepository.findById(ordersEntity.getOrdersId()).get().setOrdersTotalPrice(totalPrice); // 총 주문액 set
-
-        if(orderDto.getFeedNumber() != null){
-            FeedVo feedVo = snsServiceClient.findByFeedNumber(orderDto.getFeedNumber());
-            UserVo userVo = userServiceClient.findByUserId(feedVo.getMemberId());
-            //User Entity의 point 값을 update 해야함!!
-        }
-
         return Boolean.TRUE;
     }
     /**
