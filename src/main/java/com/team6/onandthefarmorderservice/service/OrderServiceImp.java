@@ -1,6 +1,8 @@
 package com.team6.onandthefarmorderservice.service;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team6.onandthefarmorderservice.dto.*;
 import com.team6.onandthefarmorderservice.entity.OrderProduct;
 import com.team6.onandthefarmorderservice.entity.Orders;
@@ -9,6 +11,11 @@ import com.team6.onandthefarmorderservice.feignclient.CartServiceClient;
 import com.team6.onandthefarmorderservice.feignclient.ProductServiceClient;
 import com.team6.onandthefarmorderservice.feignclient.SnsServiceClient;
 import com.team6.onandthefarmorderservice.feignclient.UserServiceClient;
+import com.team6.onandthefarmorderservice.kafka.OrderChannelAdapter;
+import com.team6.onandthefarmorderservice.kafka.vo.Field;
+import com.team6.onandthefarmorderservice.kafka.vo.KafkaOrderDto;
+import com.team6.onandthefarmorderservice.kafka.vo.Payload;
+import com.team6.onandthefarmorderservice.kafka.vo.Schema;
 import com.team6.onandthefarmorderservice.repository.OrderProductRepository;
 import com.team6.onandthefarmorderservice.repository.OrderRepository;
 import com.team6.onandthefarmorderservice.repository.RefundRepository;
@@ -22,10 +29,13 @@ import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.core.env.Environment;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -56,6 +66,30 @@ public class OrderServiceImp implements OrderService {
 
     private final CircuitBreakerFactory circuitbreakerFactory;
 
+    private final OrderChannelAdapter orderChannelAdapter;
+
+    List<Field> fields = Arrays.asList(new Field("int64",false,"orders_id"),
+            new Field("string",true,"orders_address"),
+            new Field("string",true,"orders_date"),
+            new Field("string",true,"orders_delivery_company"),
+            new Field("string",true,"orders_delivery_date"),
+            new Field("string",true,"orders_delivery_waybill_number"),
+            new Field("string",true,"orders_phone"),
+            new Field("string",true,"orders_recipient_name"),
+            new Field("string",true,"orders_request"),
+            new Field("int64",true,"orders_seller_id"),
+            new Field("string",true,"orders_serial"),
+            new Field("string",true,"orders_status"),
+            new Field("int32",true,"orders_total_price"),
+            new Field("int64",true,"user_id"));
+    Schema schema = Schema.builder()
+            .type("struct")
+            .fields(fields)
+            .optional(false)
+            .name("orders")
+            .build();
+
+
     public Boolean createOrder(OrderDto orderDto){
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
@@ -72,48 +106,92 @@ public class OrderServiceImp implements OrderService {
             prodSeller는 담을 공간
          */
 
-        Orders orders = Orders.builder()
-                .ordersPhone(orderDto.getOrderPhone())
-                .ordersAddress(orderDto.getOrderAddress())
-                .ordersRequest(orderDto.getOrderRequest())
-                .ordersRecipientName(orderDto.getOrderRecipientName())
-                .ordersSerial(orderDto.getOrderSerial())
-                .ordersDate(dateUtils.transDate(env.getProperty("dateutils.format")))
-                .ordersStatus("activated")
-                .userId(orderDto.getUserId())
-                .build(); // 주문 엔티티 생성
+//        Orders orders = Orders.builder()
+//                .ordersPhone(orderDto.getOrderPhone())
+//                .ordersAddress(orderDto.getOrderAddress())
+//                .ordersRequest(orderDto.getOrderRequest())
+//                .ordersRecipientName(orderDto.getOrderRecipientName())
+//                .ordersSerial(orderDto.getOrderSerial())
+//                .ordersDate(dateUtils.transDate(env.getProperty("dateutils.format")))
+//                .ordersStatus("activated")
+//                .userId(orderDto.getUserId())
+//                .build(); // 주문 엔티티 생성
+//        for(OrderProductDto orderProductDto : orderDto.getProductList()){
+//            ProductVo productVo
+//                    = circuitbreaker.run(
+//                            ()->productServiceClient.findByProductId(orderProductDto.getProductId()),
+//                    throwable -> new ProductVo());
+//            //ProductVo productVo = productServiceClient.findByProductId(orderProductDto.getProductId());
+//            orderProductDto.setProductName(productVo.getProductName());
+//            orderProductDto.setProductPrice(productVo.getProductPrice());
+//            orderProductDto.setSellerId(productVo.getSellerId());
+//            orders.setOrdersSellerId(productVo.getSellerId());
+//            orderProductDto.setProductImg(productVo.getProductMainImgSrc()); // 이미지는 나중에
+//        }
+
+        Payload payload = Payload.builder()
+                .orders_id(Long.valueOf(orderDto.getOrderSerial()))
+                .orders_phone(orderDto.getOrderPhone())
+                .orders_address(orderDto.getOrderAddress())
+                .orders_request(orderDto.getOrderRequest())
+                .orders_recipient_name(orderDto.getOrderRecipientName())
+                .orders_serial(orderDto.getOrderSerial())
+                .orders_date(dateUtils.transDate(env.getProperty("dateutils.format")))
+                .orders_status("activated")
+                .user_id(orderDto.getUserId())
+                .build();
+
         for(OrderProductDto orderProductDto : orderDto.getProductList()){
             ProductVo productVo
                     = circuitbreaker.run(
-                            ()->productServiceClient.findByProductId(orderProductDto.getProductId()),
+                    ()->productServiceClient.findByProductId(orderProductDto.getProductId()),
                     throwable -> new ProductVo());
             //ProductVo productVo = productServiceClient.findByProductId(orderProductDto.getProductId());
             orderProductDto.setProductName(productVo.getProductName());
             orderProductDto.setProductPrice(productVo.getProductPrice());
             orderProductDto.setSellerId(productVo.getSellerId());
-            orders.setOrdersSellerId(productVo.getSellerId());
+            payload.setOrders_seller_id(productVo.getSellerId());
             orderProductDto.setProductImg(productVo.getProductMainImgSrc()); // 이미지는 나중에
         }
 
-        Orders ordersEntity = orderRepository.save(orders); // 주문 생성
+        KafkaOrderDto kafkaOrderDto = new KafkaOrderDto(schema,payload);
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonInString = "";
+        try{
+            jsonInString = mapper.writeValueAsString(kafkaOrderDto);
+        }catch(JsonProcessingException ex){
+            ex.printStackTrace();
+        }
 
+        orderChannelAdapter.producer(jsonInString);
+        //Orders ordersEntity = orderRepository.save(orders); // 주문 생성
+        try{
+            Thread.sleep(500); // 저장 시간
+        }catch(InterruptedException e){
+            e.printStackTrace();
+        }
+        Optional<Orders> ordersEntity = orderRepository.findById(Long.valueOf(orderDto.getOrderSerial()));
+        if(ordersEntity.isEmpty()){
+            throw new RuntimeException();
+        }
+        log.info(orderDto.getProductList().toString());
         int totalPrice = 0;
         for(OrderProductDto order : orderDto.getProductList()){
-            totalPrice+=order.getProductPrice()* order.getProductQty();
+            totalPrice+=order.getProductPrice() * order.getProductQty();
             OrderProduct orderProduct = OrderProduct.builder()
                     .orderProductMainImg(order.getProductImg())
                     .orderProductQty(order.getProductQty())
                     .orderProductPrice(order.getProductPrice())
                     .orderProductName(order.getProductName())
-                    .orders(ordersEntity)
+                    .orders(ordersEntity.get())
                     .productId(order.getProductId())
                     .sellerId(order.getSellerId())
-                    .orderProductStatus(orders.getOrdersStatus())
-                    .orderProductDate(orders.getOrdersDate())
+                    .orderProductStatus(ordersEntity.get().getOrdersStatus())
+                    .orderProductDate(ordersEntity.get().getOrdersDate())
                     .build();
             orderProductRepository.save(orderProduct); // 각각의 주문 상품 생성
         }
-        orderRepository.findById(ordersEntity.getOrdersId()).get().setOrdersTotalPrice(totalPrice); // 총 주문액 set
+        orderRepository.findById(ordersEntity.get().getOrdersId()).get().setOrdersTotalPrice(totalPrice); // 총 주문액 set
         return Boolean.TRUE;
     }
     /**
@@ -908,5 +986,19 @@ public class OrderServiceImp implements OrderService {
                 .build();
 
         return ordersConditionResponse;
+    }
+
+    /**
+     *  유효성 검사하는 메서드
+     * @param orderId
+     * @return true: 중복 안된 메시지 / false : 중복된 메시지
+     */
+    @Override
+    public Boolean isAlreadyProcessedOrderId(Long orderId) {
+        Optional<Orders> orders = orderRepository.findById(orderId);
+        if(orders.isEmpty()){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 }
