@@ -11,6 +11,7 @@ import com.team6.onandthefarmorderservice.utils.BaseResponse;
 import com.team6.onandthefarmorderservice.vo.*;
 import com.team6.onandthefarmorderservice.vo.feignclient.PaymentVo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/api/user/orders")
 /** @Api(value = "주문",description = "주문 상태\n" +
         " * activated(os0) : 주문완료\n" +
@@ -136,7 +138,7 @@ public class UserOrderController {
                     .build();
             orderDto.getProductList().add(orderProductDto);
         }
-
+        log.info("controller 단 orderDto : "+orderDto.getProductList().toString());
         try{
             tcc.placeOrder(orderDto);
         } catch (RuntimeException e){

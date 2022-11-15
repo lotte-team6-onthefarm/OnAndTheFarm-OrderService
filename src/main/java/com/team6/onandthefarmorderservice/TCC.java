@@ -4,6 +4,7 @@ package com.team6.onandthefarmorderservice;
 import com.team6.onandthefarmorderservice.dto.OrderDto;
 import com.team6.onandthefarmorderservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TCC {
 
     private final TccRestAdapter tccRestAdapter;
@@ -33,9 +35,11 @@ public class TCC {
         // 결제 시도(try)
         participantLinks.add(tryPayment(orderDto));
 
+        log.info("place 단 orderDto : "+orderDto.getProductList().toString());
         try{
             // 주문 생성
-            orderService.createOrder(orderDto);
+            Boolean result = orderService.createOrder(orderDto);
+            if(!result) throw new RuntimeException();
         }catch (RuntimeException e){
             e.printStackTrace();
             tccRestAdapter.cancelAll(participantLinks);

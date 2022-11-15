@@ -23,4 +23,5 @@ public interface OrderService {
     Boolean deliveryStart(OrderDeliveryDto orderDeliveryDto);
     Boolean deliveryConform(String orderSerial);
     OrdersConditionResponse findOrdersCondition(Long sellerId);
+    Boolean isAlreadyProcessedOrderId(Long orderId);
 }
