@@ -575,7 +575,7 @@ public class OrderServiceImp implements OrderService {
 
         OrderUserDetailResponse orderUserDetailResponse =
                 OrderUserDetailResponse.builder()
-                        .orderName(user.getUserName())
+                        .orderName(orders.getOrdersRecipientName())
                         .orderAddress(orders.getOrdersAddress())
                         .orderDate(orders.getOrdersDate())
                         .orderPhone(orders.getOrdersPhone())
