@@ -24,13 +24,13 @@ public interface OrderRepository extends CrudRepository<Orders,Long> {
     @Query("select o from Orders o where o.userId=:userId and o.ordersStatus = 'deliveryCompleted'")
     List<Orders> findWithOrderAndOrdersStatus(@Param("userId") Long userId);
 
-    @Query("select o from Orders o where o.ordersSellerId=:sellerId and o.ordersStatus='activated' and o.ordersTotalPrice is not null")
+    @Query("select o from OrderProduct o where o.sellerId=:sellerId and o.orderProductStatus='activated'")
     List<Orders> findBeforeDeliveryOrders(@Param("sellerId") Long sellerId);
 
-    @Query("select o from Orders o where o.ordersSellerId=:sellerId and o.ordersStatus='deliveryProgress'")
+    @Query("select o from OrderProduct o where o.sellerId=:sellerId and o.orderProductStatus='deliveryProgress'")
     List<Orders> findDeliveringOrders(@Param("sellerId") Long sellerId);
 
-    @Query("select o from Orders o where o.ordersSellerId=:sellerId and o.ordersStatus='deliveryCompleted'")
+    @Query("select o from OrderProduct o where o.sellerId=:sellerId and o.orderProductStatus='deliveryCompleted'")
     List<Orders> findDeliverCompleteOrders(@Param("sellerId") Long sellerId);
 
 }
