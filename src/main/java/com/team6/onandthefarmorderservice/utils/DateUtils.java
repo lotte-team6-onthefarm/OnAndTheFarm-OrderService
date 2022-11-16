@@ -5,12 +5,16 @@ import org.springframework.stereotype.Component;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 @Component
 public class DateUtils {
 
     public String transDate(String pattern){
+        TimeZone time;
+        time = TimeZone.getTimeZone("Asia/Seoul");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern, Locale.KOREA);
+        simpleDateFormat.setTimeZone(time);
         String date = simpleDateFormat.format(new Date());
         return date;
     }
