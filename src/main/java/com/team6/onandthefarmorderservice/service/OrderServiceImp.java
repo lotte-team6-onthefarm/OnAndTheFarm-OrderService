@@ -953,11 +953,11 @@ public class OrderServiceImp implements OrderService {
     public OrdersConditionResponse findOrdersCondition(Long sellerId) {
         CircuitBreaker productCircuitbreaker = circuitbreakerFactory.create("productCircuitbreaker");
 
-        List<Orders> beforeDelivery = orderRepository.findBeforeDeliveryOrders(sellerId);
+        List<Orders> beforeDelivery = orderProductRepository.findBeforeDeliveryOrders(sellerId);
         List<OrderProduct> requestRefund = orderProductRepository.findRequestRefundOrderProduct(sellerId);
         List<OrderProduct> cancelOrders = orderProductRepository.findCancelOrdersOrderProduct(sellerId);
-        List<Orders> delivering = orderRepository.findDeliveringOrders(sellerId);
-        List<Orders> deliverComplete = orderRepository.findDeliverCompleteOrders(sellerId);
+        List<Orders> delivering = orderProductRepository.findDeliveringOrders(sellerId);
+        List<Orders> deliverComplete = orderProductRepository.findDeliverCompleteOrders(sellerId);
         List<ProductVo> notSelling
                 = productCircuitbreaker.run(
                         ()->productServiceClient.findNotSellingProduct(sellerId),

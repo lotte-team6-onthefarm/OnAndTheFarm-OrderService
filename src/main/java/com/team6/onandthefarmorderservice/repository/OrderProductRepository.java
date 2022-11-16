@@ -36,4 +36,13 @@ public interface OrderProductRepository extends CrudRepository<OrderProduct,Long
 
     @Query("select o from OrderProduct o where o.sellerId=:sellerId and o.orderProductStatus='canceled'")
     List<OrderProduct> findCancelOrdersOrderProduct(@Param("sellerId") Long sellerId);
+
+    @Query("select o from OrderProduct o where o.sellerId=:sellerId and o.orderProductStatus='activated'")
+    List<Orders> findBeforeDeliveryOrders(@Param("sellerId") Long sellerId);
+
+    @Query("select o from OrderProduct o where o.sellerId=:sellerId and o.orderProductStatus='deliveryProgress'")
+    List<Orders> findDeliveringOrders(@Param("sellerId") Long sellerId);
+
+    @Query("select o from OrderProduct o where o.sellerId=:sellerId and o.orderProductStatus='deliveryCompleted'")
+    List<Orders> findDeliverCompleteOrders(@Param("sellerId") Long sellerId);
 }
