@@ -953,11 +953,11 @@ public class OrderServiceImp implements OrderService {
     public OrdersConditionResponse findOrdersCondition(Long sellerId) {
         CircuitBreaker productCircuitbreaker = circuitbreakerFactory.create("productCircuitbreaker");
 
-        List<Orders> beforeDelivery = orderProductRepository.findBeforeDeliveryOrders(sellerId);
-        List<OrderProduct> requestRefund = orderProductRepository.findRequestRefundOrderProduct(sellerId);
-        List<OrderProduct> cancelOrders = orderProductRepository.findCancelOrdersOrderProduct(sellerId);
-        List<Orders> delivering = orderProductRepository.findDeliveringOrders(sellerId);
-        List<Orders> deliverComplete = orderProductRepository.findDeliverCompleteOrders(sellerId);
+        Integer beforeDelivery = orderProductRepository.countBySellerIdAndOrderProductStatus(sellerId,"activated");
+        Integer requestRefund = orderProductRepository.countBySellerIdAndOrderProductStatus(sellerId,"refundRequest");
+        Integer cancelOrders = orderProductRepository.countBySellerIdAndOrderProductStatus(sellerId,"canceled");
+        Integer delivering = orderProductRepository.countBySellerIdAndOrderProductStatus(sellerId,"deliveryProgress");
+        Integer deliverComplete = orderProductRepository.countBySellerIdAndOrderProductStatus(sellerId,"deliveryCompleted");
         List<ProductVo> notSelling
                 = productCircuitbreaker.run(
                         ()->productServiceClient.findNotSellingProduct(sellerId),
@@ -975,14 +975,14 @@ public class OrderServiceImp implements OrderService {
         //List<ProductQnaVo> beforeAnswer = productServiceClient.findBeforeAnswerProductQna(sellerId);
 
         OrdersConditionResponse ordersConditionResponse = OrdersConditionResponse.builder()
-                .beforeDelivery(beforeDelivery.size())
-                .requestRefund(requestRefund.size())
-                .cancelOrders(cancelOrders.size())
-                .delivering(delivering.size())
+                .beforeDelivery(beforeDelivery)
+                .requestRefund(requestRefund)
+                .cancelOrders(cancelOrders)
+                .delivering(delivering)
                 .notSelling(notSelling.size())
                 .beforeAnswer(beforeAnswer.size())
                 .sellingProducts(selling.size())
-                .deliverCompletes(deliverComplete.size())
+                .deliverCompletes(deliverComplete)
                 .build();
 
         return ordersConditionResponse;
